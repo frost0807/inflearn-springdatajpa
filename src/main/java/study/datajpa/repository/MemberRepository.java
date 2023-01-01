@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> , MemberRepositoryCustom {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom, JpaSpecificationExecutor<Member> {
 
     List<Member> findByUsernameAndAgeGreaterThan(String username, int age);
 
@@ -35,7 +35,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> , MemberRe
     List<Member> findByNames(@Param("names") Collection<String> names);
 
     List<Member> findListByUsername(String username);//컬렉션
+
     Member findMemberByUsername(String username);//단건
+
     Optional<Member> findOptionalByUsername(String username);//단건 Optional
 
     @Query(value = "select m from Member m")
@@ -56,7 +58,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> , MemberRe
     @Query("select m from Member m")
     List<Member> findMemberEntityGraph();
 
-//    @EntityGraph(attributePaths = {"team"})
+    //    @EntityGraph(attributePaths = {"team"})
     @EntityGraph("Member.all")
     List<Member> findEntityGraphByUsername(@Param("username") String username);
 
@@ -65,4 +67,15 @@ public interface MemberRepository extends JpaRepository<Member, Long> , MemberRe
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<Member> findLockByUsername(String username);
+
+    <T> List<T> findProjectionsByUsername(@Param("username") String username, Class<T> type);
+
+    @Query(value = "select * from member where username = ?", nativeQuery = true)
+    Member findByNativeQuery(String username);
+
+    @Query(value = "select m.member_id as id, m.username, t.name as teamName" +
+            " from member m left join team t",
+            countQuery = "select count(*) from member",
+            nativeQuery = true)
+    Page<MemberProjection> findByNativeProjection(Pageable pageable);
 }
